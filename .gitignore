@@ -1,0 +1,14 @@
+# Dependencias de Node.js
+backend/node_modules/
+node_modules/
+
+# Variables de entorno y credenciales
+backend/.env
+.env
+*.env
+
+# Archivos de sistema y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
