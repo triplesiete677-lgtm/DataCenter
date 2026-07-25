@@ -1,102 +1,56 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const pool = require("../db");
+const db = require('../db');
 
-// Obtener todas las tareas
-router.get("/", async (req, res) => {
+// 1. Obtener todas las tareas
+router.get('/', async (req, res) => {
     try {
-        const result = await pool.query(
-            "SELECT * FROM tasks ORDER BY id ASC"
-        );
-
+        const result = await db.query('SELECT * FROM tasks ORDER BY created_at DESC');
         res.json(result.rows);
-
     } catch (error) {
-        console.error(error);
-
-        res.status(500).json({
-            mensaje: "Error al obtener las tareas"
-        });
+        res.status(500).json({ error: error.message });
     }
 });
 
-// Crear una tarea
-router.post("/", async (req, res) => {
+// 2. Crear una nueva tarea
+router.post('/', async (req, res) => {
+    const { title } = req.body;
+    if (!title) return res.status(400).json({ error: 'El título es obligatorio' });
+
     try {
-
-        const { title } = req.body;
-
-        const result = await pool.query(
-            "INSERT INTO tasks(title, completed) VALUES($1,false) RETURNING *",
+        const result = await db.query(
+            'INSERT INTO tasks (title) VALUES ($1) RETURNING *',
             [title]
         );
-
         res.status(201).json(result.rows[0]);
-
     } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            mensaje: "Error al crear la tarea"
-        });
-
+        res.status(500).json({ error: error.message });
     }
 });
 
-// Actualizar una tarea
-router.put("/:id", async (req, res) => {
+// 3. Cambiar estado (completada / pendiente)
+router.put('/:id', async (req, res) => {
+    const { id } = req.params;
+    const { completed } = req.body;
 
     try {
-
-        const { id } = req.params;
-        const { title, completed } = req.body;
-
-        const result = await pool.query(
-            "UPDATE tasks SET title=$1, completed=$2 WHERE id=$3 RETURNING *",
-            [title, completed, id]
-        );
-
-        res.json(result.rows[0]);
-
+        await db.query('UPDATE tasks SET completed = $1 WHERE id = $2', [completed, id]);
+        res.json({ message: 'Tarea actualizada correctamente' });
     } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            mensaje: "Error al actualizar"
-        });
-
+        res.status(500).json({ error: error.message });
     }
-
 });
 
-// Eliminar tarea
-router.delete("/:id", async (req, res) => {
+// 4. Eliminar una tarea
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
 
     try {
-
-        const { id } = req.params;
-
-        await pool.query(
-            "DELETE FROM tasks WHERE id=$1",
-            [id]
-        );
-
-        res.json({
-            mensaje: "Tarea eliminada"
-        });
-
+        await db.query('DELETE FROM tasks WHERE id = $1', [id]);
+        res.json({ message: 'Tarea eliminada' });
     } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            mensaje: "Error al eliminar"
-        });
-
+        res.status(500).json({ error: error.message });
     }
-
 });
 
 module.exports = router;
