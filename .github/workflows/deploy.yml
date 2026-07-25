@@ -1,20 +1,35 @@
-- name: Desplegar en la VPS por SSH
-  uses: appleboy/ssh-action@v1.0.3
-  with:
-    host: ${{ secrets.SSH_HOST }}
-    username: ${{ secrets.SSH_USERNAME }}
-    key: ${{ secrets.SSH_PRIVATE_KEY }}
-    port: 22
-    script: |
-      mkdir -p ~/app
-      cd ~/app
+name: Deploy SPA App to AWS VPS
 
-      if [ -d ".git" ]; then
-        git pull origin main
-      else
-        git clone https://github.com/${{ github.repository }}.git .
-      fi
+on:
+  push:
+    branches:
+      - main  # Cambia por 'master' si tu rama principal se llama master
 
-      # Levantar los contenedores del proyecto
-      docker compose down || true
-      docker compose up -d --build
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Desplegar en la VPS por SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            mkdir -p ~/app
+            cd ~/app
+
+            if [ -d ".git" ]; then
+              git pull origin main
+            else
+              git clone https://github.com/${{ github.repository }}.git .
+            fi
+
+            # Levantar los contenedores del proyecto
+            docker compose down || true
+            docker compose up -d --build
