@@ -7,10 +7,12 @@ services:
       - "5000:5000"
     environment:
       - NODE_ENV=production
+      - PORT=5000
       - DB_HOST=database
       - DB_USER=root
       - DB_PASSWORD=rootpassword
       - DB_NAME=tododb
+      - DB_PORT=5432
     depends_on:
       database:
         condition: service_healthy
@@ -23,18 +25,20 @@ services:
       - backend
 
   database:
-    image: mysql:8.0
+    image: postgres:15-alpine
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: tododb
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: rootpassword
+      POSTGRES_DB: tododb
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     ports:
-      - "3306:3306"
+      - "5432:5432"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "pg_isready -U root -d tododb"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
